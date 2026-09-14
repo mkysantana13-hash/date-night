@@ -591,10 +591,16 @@ function renderStatus(){
     bits.push(`${weather.temp}°F out`);
   }
 
-  let hidden = 0;
+  let byWeather = 0, byHours = 0;
   GENRES.forEach((g, i) => {
-    hidden += remaining(i).filter(idea => !(openNow(idea) && weatherOk(idea))).length;
+    remaining(i).forEach(idea => {
+      const shut = !openNow(idea);
+      const wet = !weatherOk(idea);
+      if (wet) byWeather++;
+      else if (shut) byHours++;
+    });
   });
+  const hidden = byWeather + byHours;
 
   if (!hidden && !bits.length){
     statusBar.classList.add("hidden");
@@ -605,7 +611,10 @@ function renderStatus(){
 
   const txt = document.createElement("span");
   if (filtersOn && hidden){
-    txt.textContent = (bits.length ? bits[0] + " — " : "") + `${hidden} spot${hidden === 1 ? "" : "s"} hidden`;
+    const why = [];
+    if (byHours) why.push(`${byHours} closed right now`);
+    if (byWeather) why.push(`${byWeather} rained out`);
+    txt.textContent = `${hidden} spot${hidden === 1 ? "" : "s"} hidden (${why.join(", ")})`;
   } else if (!filtersOn && hidden){
     txt.textContent = "Showing everything, closed spots included";
   } else {
