@@ -3,7 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pick our next date</title>
+<title>Let's pick our next date</title>
+
+<!-- Link preview — replace YOUR-SITE with your real Vercel address in both lines -->
+<meta name="description" content="Spin the wheel and see where we end up.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Let's pick our next date">
+<meta property="og:description" content="Spin the wheel and see where we end up.">
+<meta property="og:image" content="https://YOUR-SITE.vercel.app/og.png">
+<meta property="og:url" content="https://YOUR-SITE.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1E1740">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
@@ -172,6 +182,12 @@
     font-family:'Karla',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;
   }
 
+  .keep{
+    display:flex;align-items:center;gap:9px;
+    margin-top:12px;color:#B4A8DC;font-size:.88rem;cursor:pointer;
+  }
+  .keep input{accent-color:var(--mint);width:18px;height:18px}
+
   .locked{text-align:center;padding:30px 22px}
   .locked .label{font-size:.95rem;color:var(--mint);margin-bottom:10px}
   .locked .pick{
@@ -330,6 +346,7 @@ const GENRES = [
     { n:"Regal Winter Park Village", id:"ChIJvdpNf2tw54gRn8zxkifjXBY" },
     { n:"AmStar Lake Mary", id:"ChIJBTRHN0AN54gRsDT79N1crAs" },
     { n:"Enzian Theater, Maitland", id:"ChIJ-WLCqkdw54gR5FyZzXYSoV4" },
+    { n:"Silver Moon Drive-In, Lakeland", id:"ChIJ1dJMdEc43YgRmII076Tbhmg" },
     { n:"Movie at home, you pick" }
   ]},
   { short:"Your call", title:"Your call", ideas:[
@@ -353,11 +370,19 @@ function mapUrl(idea){
 
 /* ---- used ideas, remembered between visits ---- */
 const STORE = "datenight.used.v1";
+const CUSTOM = "datenight.custom.v1";
 let used = new Set();
+let customs = {};
 try { used = new Set(JSON.parse(localStorage.getItem(STORE) || "[]")); } catch (e) {}
+try { customs = JSON.parse(localStorage.getItem(CUSTOM) || "{}"); } catch (e) {}
 function persist(){ try { localStorage.setItem(STORE, JSON.stringify([...used])); } catch (e) {} }
+function persistCustom(){ try { localStorage.setItem(CUSTOM, JSON.stringify(customs)); } catch (e) {} }
 function key(gi, name){ return gi + "|" + name; }
-function remaining(gi){ return GENRES[gi].ideas.filter(idea => !used.has(key(gi, idea.n))); }
+function allIdeas(gi){
+  const extra = (customs[gi] || []).map(n => ({ n: n, mine: true }));
+  return GENRES[gi].ideas.concat(extra);
+}
+function remaining(gi){ return allIdeas(gi).filter(idea => !used.has(key(gi, idea.n))); }
 
 const cv = document.getElementById("wheel");
 const ctx = cv.getContext("2d");
@@ -599,13 +624,28 @@ function showGenre(gi){
   const submit = () => {
     const val = input.value.trim();
     if (!val) { input.focus(); return; }
-    lockIn(gi, val, false);
+    if (keep.checked && !(customs[gi] || []).includes(val)){
+      customs[gi] = (customs[gi] || []).concat(val);
+      persistCustom();
+    }
+    lockIn(gi, val, keep.checked);
   };
   add.addEventListener("click", submit);
   input.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
   custom.appendChild(input);
   custom.appendChild(add);
   card.appendChild(custom);
+
+  const keepRow = document.createElement("label");
+  keepRow.className = "keep";
+  const keep = document.createElement("input");
+  keep.type = "checkbox";
+  keep.checked = true;
+  const keepText = document.createElement("span");
+  keepText.textContent = "Keep this on the list for next time";
+  keepRow.appendChild(keep);
+  keepRow.appendChild(keepText);
+  card.appendChild(keepRow);
 
   result.innerHTML = "";
   result.appendChild(card);
