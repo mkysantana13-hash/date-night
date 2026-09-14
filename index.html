@@ -110,14 +110,28 @@
   }
   .card p{margin:0 0 18px;color:#D6CDF2;line-height:1.55;font-size:.98rem}
   .ideas{display:flex;flex-direction:column;gap:9px}
-  .ideas button{
-    text-align:left;background:var(--night-deep);
+  .idea{display:flex;gap:8px;align-items:stretch}
+  .pickbtn{
+    flex:1;min-width:0;
+    display:flex;align-items:center;gap:12px;text-align:left;
+    background:var(--night-deep);
     border:1px solid rgba(107,227,192,.25);
-    color:var(--cream);border-radius:12px;padding:13px 15px;
+    color:var(--cream);border-radius:12px;padding:11px 14px;
     font-family:'Karla',sans-serif;font-size:1rem;cursor:pointer;
     transition:border-color .15s ease,background .15s ease;
   }
-  .ideas button:hover{border-color:var(--mint);background:#1B1440}
+  .pickbtn:hover{border-color:var(--mint);background:#1B1440}
+  .pickbtn img{
+    flex:none;width:46px;height:46px;border-radius:8px;object-fit:cover;
+    background:#2B2350;
+  }
+  .rev{
+    flex:none;display:flex;align-items:center;
+    padding:0 14px;border-radius:12px;
+    border:1px solid rgba(255,255,255,.18);
+    color:#C3B6EA;text-decoration:none;font-size:.82rem;
+  }
+  .rev:hover{border-color:var(--amber);color:var(--amber)}
 
   .custom{display:flex;gap:8px;margin-top:14px}
   .custom input{
@@ -209,30 +223,79 @@
 </div>
 
 <script>
-/* ---------- edit this part ---------- */
+/* ---------- edit this part ----------
+   n   = name shown
+   id  = Google place ID (adds a Reviews link)
+   q   = plain search text (use instead of id for areas, not single businesses)
+   img = optional image URL for a thumbnail
+------------------------------------- */
 const PHONE = "+13219489554";
 
 const GENRES = [
-  { short:"Eat",      title:"Eat something new",
-    ideas:["Great Southern Box Company","Mills 50","City Food Hall","Dessert downtown"] },
-  { short:"Outside",  title:"Outside all day",
-    ideas:["Tibet-Butler Preserve","Shingle Creek Trail","Paddleboard the Winter Park chain","Night kayak at Indian River Lagoon"] },
-  { short:"Stay in",  title:"Stay in",
-    ideas:["Cook something from scratch","Movie marathon","Board games and takeout","Build a playlist together"] },
-  { short:"Make",     title:"Make something",
-    ideas:["All Fired Up, Winter Park","Stroke of Art","Super Awesome Cool Pottery","Bake something"] },
-  { short:"Loud",     title:"Somewhere loud",
-    ideas:["The Social","Candlelight concert at The Abbey","Judson's Live","Tin Roof"] },
-  { short:"Tourists", title:"Be tourists",
-    ideas:["Orlando Museum of Art","Orlando Science Center","Museum of Illusions","Titanic exhibition"] },
-  { short:"Sunset",   title:"Sunset plan",
-    ideas:["AC Sky Bar","KaLa Rooftop","Lake Eola","Leu Gardens"] },
-  { short:"Winter Park", title:"Winter Park",
-    ideas:["Morse Museum","Scenic Boat Tour","Park Avenue","Kraft Azalea Garden","Mead Botanical Garden","Polasek Museum"] },
-  { short:"Local", title:"Lake Mary / Sanford",
-    ideas:["Historic downtown Sanford","Celery City Craft Beer Garden","Sanford Riverwalk","Crown Alley speakeasy","Pisco Peruvian, Lake Mary","Arcade Monsters Lake Mary"] },
-  { short:"Your call",title:"Your call",
-    ideas:["Something you've been wanting to do","Redo of our best date","Surprise me","Text me the plan"] }
+  { short:"Eat", title:"Eat something new", ideas:[
+    { n:"Great Southern Box Company", id:"ChIJ231qjvF754gRZX6vzhb2aCk" },
+    { n:"Mills 50", q:"Mills 50 district Orlando" },
+    { n:"City Food Hall", id:"ChIJ8R-5_qt754gRX8tDqRpr8wY" },
+    { n:"Dessert downtown", q:"dessert downtown Orlando" }
+  ]},
+  { short:"Outside", title:"Outside all day", ideas:[
+    { n:"Tibet-Butler Preserve", id:"ChIJURXbZf1654gR-X1CGPuo0kI" },
+    { n:"Shingle Creek Trail", id:"ChIJYzIXLdCA3YgRQQsek1G6IMk" },
+    { n:"Paddleboard the Winter Park chain", id:"ChIJeRwYHwVx54gRBPrd45O96Dg" },
+    { n:"Night kayak at Indian River Lagoon", id:"ChIJYxWsEiFl54gREZ-M7CmKvzw" }
+  ]},
+  { short:"Stay in", title:"Stay in", ideas:[
+    { n:"Cook something from scratch" },
+    { n:"Movie marathon" },
+    { n:"Board games and takeout" },
+    { n:"Build a playlist together" }
+  ]},
+  { short:"Make", title:"Make something", ideas:[
+    { n:"All Fired Up, Winter Park", id:"ChIJjapVvA9w54gRY4Tpi19HXhI" },
+    { n:"Stroke of Art", id:"ChIJb8GbCF9v54gRC6Pu82w4vho" },
+    { n:"Super Awesome Cool Pottery", id:"ChIJK1c0EpN854gRXTc3p4gcpi4" },
+    { n:"Bake something" }
+  ]},
+  { short:"Loud", title:"Somewhere loud", ideas:[
+    { n:"The Social", id:"ChIJjVl2l_5654gRVQGtxg_3lnw" },
+    { n:"Candlelight concert at The Abbey", id:"ChIJqxgi_-J654gRAUVO-nnoTgA" },
+    { n:"Judson's Live", id:"ChIJfzpAT_p754gR8l1hCPLVd9g" },
+    { n:"Tin Roof", id:"ChIJnw2AQFN-54gRaHlUw41HCnk" }
+  ]},
+  { short:"Tourists", title:"Be tourists", ideas:[
+    { n:"Orlando Museum of Art", id:"ChIJ7aIAgJd654gRjUN8WsPaaI4" },
+    { n:"Orlando Science Center", id:"ChIJo2bql5B654gR_ITN9PGhBbU" },
+    { n:"Museum of Illusions", id:"ChIJc1x01Xl_54gR3yyWFYterI4" },
+    { n:"Titanic exhibition", id:"ChIJccEtMv5-54gR8KdmGMChKtk" }
+  ]},
+  { short:"Sunset", title:"Sunset plan", ideas:[
+    { n:"AC Sky Bar", id:"ChIJkcscy-J754gRTfr8C3egaY8" },
+    { n:"KaLa Rooftop", id:"ChIJ0x4GWJx_54gRy1vLvzn_1cA" },
+    { n:"Lake Eola", q:"Lake Eola Park Orlando" },
+    { n:"Leu Gardens", id:"ChIJCRCYGrx654gR3G9qoVbWlpY" }
+  ]},
+  { short:"Winter Park", title:"Winter Park", ideas:[
+    { n:"Morse Museum", id:"ChIJx4O9VBdw54gRcQ8akxK7nkc" },
+    { n:"Scenic Boat Tour", id:"ChIJ4XkjoBtw54gRGiqFxtWvbM8" },
+    { n:"Park Avenue", id:"ChIJf08FfxBw54gR5ZaArMYFULs" },
+    { n:"Kraft Azalea Garden", id:"ChIJ-TjwRCFw54gRszapr62IW2c" },
+    { n:"Mead Botanical Garden", id:"ChIJ-Q5hegpw54gR1N58sp-UbH0" },
+    { n:"Polasek Museum", id:"ChIJ-UtH7xxw54gR8kcPnO3ji1U" }
+  ]},
+  { short:"Local", title:"Lake Mary / Sanford", ideas:[
+    { n:"Historic downtown Sanford", id:"ChIJDWqneZ4T54gRJpn5wL108V0" },
+    { n:"Celery City Craft Beer Garden", id:"ChIJQR-Ro50T54gRiGygXBRNP2A" },
+    { n:"Sanford Riverwalk", id:"ChIJw2NNO4MT54gRZ9tjoEUu8es" },
+    { n:"Crown Alley speakeasy", id:"ChIJUeflnN4N54gRMBXxst01Enw" },
+    { n:"Pisco Peruvian, Lake Mary", id:"ChIJgSpgGPNz54gRX41xnctdMgQ" },
+    { n:"Arcade Monsters Lake Mary", id:"ChIJL-IsW-cN54gRrcvMnKCuL3I" }
+  ]},
+  { short:"Your call", title:"Your call", ideas:[
+    { n:"Something you've been wanting to do" },
+    { n:"Redo of our best date" },
+    { n:"Surprise me" },
+    { n:"Text me the plan" }
+  ]}
 ];
 /* ------------------------------------ */
 
@@ -240,13 +303,19 @@ const SEG = 360 / GENRES.length;
 const PALETTE = ["#3B2E73","#4A3A8C","#332764","#574496"];
 const ACCENTS = ["#FFC24B","#6BE3C0","#B79CFF","#FF6B6B"];
 
+function mapUrl(idea){
+  if (idea.id) return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(idea.n)}&query_place_id=${idea.id}`;
+  if (idea.q)  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(idea.q)}`;
+  return null;
+}
+
 /* ---- used ideas, remembered between visits ---- */
 const STORE = "datenight.used.v1";
 let used = new Set();
 try { used = new Set(JSON.parse(localStorage.getItem(STORE) || "[]")); } catch (e) {}
 function persist(){ try { localStorage.setItem(STORE, JSON.stringify([...used])); } catch (e) {} }
-function key(gi, idea){ return gi + "|" + idea; }
-function remaining(gi){ return GENRES[gi].ideas.filter(idea => !used.has(key(gi, idea))); }
+function key(gi, name){ return gi + "|" + name; }
+function remaining(gi){ return GENRES[gi].ideas.filter(idea => !used.has(key(gi, idea.n))); }
 
 const cv = document.getElementById("wheel");
 const ctx = cv.getContext("2d");
@@ -308,6 +377,11 @@ const spinBtn = document.getElementById("spin");
 const result = document.getElementById("result");
 const usedBox = document.getElementById("usedBox");
 
+function refreshWheel(){
+  sizeWheel();
+  cv.style.transform = `rotate(${rotation}deg)`;
+}
+
 function nextTarget(){
   let pool = GENRES.map((g,i) => i).filter(i => remaining(i).length > 0);
   if (!pool.length) pool = GENRES.map((g,i) => i);
@@ -360,10 +434,38 @@ function showGenre(gi){
   }
 
   left.forEach(idea => {
-    const b = document.createElement("button");
-    b.textContent = idea;
-    b.addEventListener("click", () => lockIn(gi, idea, true));
-    box.appendChild(b);
+    const row = document.createElement("div");
+    row.className = "idea";
+
+    const pick = document.createElement("button");
+    pick.className = "pickbtn";
+    if (idea.img){
+      const im = document.createElement("img");
+      im.src = idea.img;
+      im.alt = "";
+      im.loading = "lazy";
+      im.addEventListener("error", () => im.remove());
+      pick.appendChild(im);
+    }
+    const label = document.createElement("span");
+    label.textContent = idea.n;
+    pick.appendChild(label);
+    pick.addEventListener("click", () => lockIn(gi, idea.n, true));
+    row.appendChild(pick);
+
+    const url = mapUrl(idea);
+    if (url){
+      const a = document.createElement("a");
+      a.className = "rev";
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = "Reviews";
+      a.setAttribute("aria-label", `Reviews and photos for ${idea.n}`);
+      row.appendChild(a);
+    }
+
+    box.appendChild(row);
   });
 
   const custom = document.createElement("div");
@@ -395,41 +497,27 @@ function sendLink(text){
   return `sms:${PHONE}${apple ? "&" : "?"}body=${encodeURIComponent(text)}`;
 }
 
-function lockIn(gi, idea, fromList){
+function lockIn(gi, name, fromList){
   if (fromList){
-    used.add(key(gi, idea));
+    used.add(key(gi, name));
     persist();
     renderUsed();
-    sizeWheel();
-    cv.style.transform = `rotate(${rotation}deg)`;
+    refreshWheel();
   }
 
-  const text = `Our next date: ${idea}`;
+  const text = `Our next date: ${name}`;
   const card = document.createElement("div");
   card.className = "card locked";
   card.innerHTML = `
     <div class="label">That's the plan</div>
-    <p class="pick">${idea}</p>
+    <p class="pick">${name}</p>
     <div class="row">
-      ${PHONE
-        ? `<a class="btn" href="${sendLink(text)}">Send it to me</a>`
-        : `<button class="btn" id="copy">Copy and send it to me</button>`}
+      <a class="btn" href="${sendLink(text)}">Send it to me</a>
       <button class="btn ghost" id="redo">Start over</button>
     </div>`;
   result.innerHTML = "";
   result.appendChild(card);
 
-  const copy = card.querySelector("#copy");
-  if (copy){
-    copy.addEventListener("click", async (e) => {
-      try {
-        await navigator.clipboard.writeText(text);
-        e.target.textContent = "Copied — now send it";
-      } catch (err) {
-        e.target.textContent = text;
-      }
-    });
-  }
   card.querySelector("#redo").addEventListener("click", () => {
     result.innerHTML = "";
     spinBtn.textContent = "Spin";
@@ -449,19 +537,17 @@ function renderUsed(){
 
   const list = document.createElement("ul");
   [...used].forEach(k => {
-    const gi = Number(k.slice(0, k.indexOf("|")));
-    const idea = k.slice(k.indexOf("|") + 1);
+    const name = k.slice(k.indexOf("|") + 1);
     const li = document.createElement("li");
     const label = document.createElement("span");
-    label.textContent = idea;
+    label.textContent = name;
     const back = document.createElement("button");
     back.textContent = "Put back";
     back.addEventListener("click", () => {
       used.delete(k);
       persist();
       renderUsed();
-      sizeWheel();
-      cv.style.transform = `rotate(${rotation}deg)`;
+      refreshWheel();
     });
     li.appendChild(label);
     li.appendChild(back);
