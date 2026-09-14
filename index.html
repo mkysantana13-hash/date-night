@@ -88,6 +88,18 @@
   .hub:active{transform:translate(-50%,-50%) scale(.96)}
   .hub:disabled{cursor:default;opacity:.75}
 
+  .status{
+    display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+    background:rgba(0,0,0,.2);border:1px solid rgba(255,194,75,.25);
+    border-radius:999px;padding:10px 16px;margin:0 auto 22px;
+    font-size:.88rem;color:#CFC5EE;
+  }
+  .status button{
+    background:none;border:0;color:var(--amber);cursor:pointer;
+    font-family:'Karla',sans-serif;font-size:.88rem;
+    text-decoration:underline;text-underline-offset:3px;padding:0;
+  }
+
   .switchrow{display:flex;gap:4px;justify-content:center;align-items:center;margin-top:2px;flex-wrap:wrap}
   .switch.on{color:var(--amber);text-decoration-color:var(--amber)}
   .plan ol{list-style:none;margin:0;padding:0;counter-reset:step}
@@ -239,6 +251,8 @@
   <h1 id="headline">Let’s pick our next date twincess</h1>
   <p class="sub">Spin it and let the wheel decide.</p>
 
+  <div id="status" class="status hidden"></div>
+
   <!-- WHEEL -->
   <div id="wheelView">
     <div class="stage">
@@ -276,16 +290,16 @@ const PHONE = "+13219489554";
 
 const GENRES = [
   { short:"Eat", title:"Eat something new", ideas:[
-    { n:"Great Southern Box Company", id:"ChIJ231qjvF754gRZX6vzhb2aCk" },
-    { n:"Mills 50", q:"Mills 50 district Orlando" },
-    { n:"City Food Hall", id:"ChIJ8R-5_qt754gRX8tDqRpr8wY" },
-    { n:"Dessert downtown", q:"dessert downtown Orlando" }
+    { n:"Great Southern Box Company", id:"ChIJ231qjvF754gRZX6vzhb2aCk", win:[11,22] },
+    { n:"Mills 50", q:"Mills 50 district Orlando", win:[11,22] },
+    { n:"City Food Hall", id:"ChIJ8R-5_qt754gRX8tDqRpr8wY", win:[11,22] },
+    { n:"Dessert downtown", q:"dessert downtown Orlando", win:[12,23] }
   ]},
   { short:"Outside", title:"Outside all day", ideas:[
-    { n:"Tibet-Butler Preserve", id:"ChIJURXbZf1654gR-X1CGPuo0kI" },
-    { n:"Shingle Creek Trail", id:"ChIJYzIXLdCA3YgRQQsek1G6IMk" },
-    { n:"Paddleboard the Winter Park chain", id:"ChIJeRwYHwVx54gRBPrd45O96Dg" },
-    { n:"Night kayak at Indian River Lagoon", id:"ChIJYxWsEiFl54gREZ-M7CmKvzw" }
+    { n:"Tibet-Butler Preserve", id:"ChIJURXbZf1654gR-X1CGPuo0kI", out:true, win:[8,17] },
+    { n:"Shingle Creek Trail", id:"ChIJYzIXLdCA3YgRQQsek1G6IMk", out:true, win:[8,19] },
+    { n:"Paddleboard the Winter Park chain", id:"ChIJeRwYHwVx54gRBPrd45O96Dg", out:true, win:[9,18] },
+    { n:"Night kayak at Indian River Lagoon", id:"ChIJYxWsEiFl54gREZ-M7CmKvzw", out:true, win:[19,24] }
   ]},
   { short:"Stay in", title:"Stay in", ideas:[
     { n:"Cook something from scratch" },
@@ -294,66 +308,65 @@ const GENRES = [
     { n:"Build a playlist together" }
   ]},
   { short:"Make", title:"Make something", ideas:[
-    { n:"All Fired Up, Winter Park", id:"ChIJjapVvA9w54gRY4Tpi19HXhI" },
-    { n:"Stroke of Art", id:"ChIJb8GbCF9v54gRC6Pu82w4vho" },
-    { n:"Super Awesome Cool Pottery", id:"ChIJK1c0EpN854gRXTc3p4gcpi4" },
+    { n:"All Fired Up, Winter Park", id:"ChIJjapVvA9w54gRY4Tpi19HXhI", win:[11,19] },
+    { n:"Stroke of Art", id:"ChIJb8GbCF9v54gRC6Pu82w4vho", win:[11,20] },
+    { n:"Super Awesome Cool Pottery", id:"ChIJK1c0EpN854gRXTc3p4gcpi4", win:[11,19] },
     { n:"Bake something" }
   ]},
   { short:"Loud", title:"Somewhere loud", ideas:[
-    { n:"The Social", id:"ChIJjVl2l_5654gRVQGtxg_3lnw" },
-    { n:"Candlelight concert at The Abbey", id:"ChIJqxgi_-J654gRAUVO-nnoTgA" },
-    { n:"Judson's Live", id:"ChIJfzpAT_p754gR8l1hCPLVd9g" },
-    { n:"Tin Roof", id:"ChIJnw2AQFN-54gRaHlUw41HCnk" }
+    { n:"The Social", id:"ChIJjVl2l_5654gRVQGtxg_3lnw", win:[19,2] },
+    { n:"Candlelight concert at The Abbey", id:"ChIJqxgi_-J654gRAUVO-nnoTgA", win:[18,23] },
+    { n:"Judson's Live", id:"ChIJfzpAT_p754gR8l1hCPLVd9g", win:[17,23] },
+    { n:"Tin Roof", id:"ChIJnw2AQFN-54gRaHlUw41HCnk", win:[17,2] }
   ]},
   { short:"Tourists", title:"Be tourists", ideas:[
-    { n:"Orlando Museum of Art", id:"ChIJ7aIAgJd654gRjUN8WsPaaI4" },
-    { n:"Orlando Science Center", id:"ChIJo2bql5B654gR_ITN9PGhBbU" },
-    { n:"Museum of Illusions", id:"ChIJc1x01Xl_54gR3yyWFYterI4" },
-    { n:"Titanic exhibition", id:"ChIJccEtMv5-54gR8KdmGMChKtk" }
+    { n:"Orlando Museum of Art", id:"ChIJ7aIAgJd654gRjUN8WsPaaI4", win:[10,16] },
+    { n:"Orlando Science Center", id:"ChIJo2bql5B654gR_ITN9PGhBbU", win:[10,17] },
+    { n:"Museum of Illusions", id:"ChIJc1x01Xl_54gR3yyWFYterI4", win:[10,20] },
+    { n:"Titanic exhibition", id:"ChIJccEtMv5-54gR8KdmGMChKtk", win:[11,20] }
   ]},
   { short:"Sunset", title:"Sunset plan", ideas:[
-    { n:"AC Sky Bar", id:"ChIJkcscy-J754gRTfr8C3egaY8" },
-    { n:"KaLa Rooftop", id:"ChIJ0x4GWJx_54gRy1vLvzn_1cA" },
-    { n:"Lake Eola", q:"Lake Eola Park Orlando" },
-    { n:"Leu Gardens", id:"ChIJCRCYGrx654gR3G9qoVbWlpY" }
+    { n:"AC Sky Bar", id:"ChIJkcscy-J754gRTfr8C3egaY8", out:true, win:[17,24] },
+    { n:"KaLa Rooftop", id:"ChIJ0x4GWJx_54gRy1vLvzn_1cA", out:true, win:[17,2] },
+    { n:"Lake Eola", q:"Lake Eola Park Orlando", out:true, win:[7,21] },
+    { n:"Leu Gardens", id:"ChIJCRCYGrx654gR3G9qoVbWlpY", out:true, win:[9,17] }
   ]},
   { short:"Winter Park", title:"Winter Park", ideas:[
-    { n:"Morse Museum", id:"ChIJx4O9VBdw54gRcQ8akxK7nkc" },
-    { n:"Scenic Boat Tour", id:"ChIJ4XkjoBtw54gRGiqFxtWvbM8" },
-    { n:"Park Avenue", id:"ChIJf08FfxBw54gR5ZaArMYFULs" },
-    { n:"Kraft Azalea Garden", id:"ChIJ-TjwRCFw54gRszapr62IW2c" },
-    { n:"Mead Botanical Garden", id:"ChIJ-Q5hegpw54gR1N58sp-UbH0" },
-    { n:"Polasek Museum", id:"ChIJ-UtH7xxw54gR8kcPnO3ji1U" }
+    { n:"Morse Museum", id:"ChIJx4O9VBdw54gRcQ8akxK7nkc", win:[10,16] },
+    { n:"Scenic Boat Tour", id:"ChIJ4XkjoBtw54gRGiqFxtWvbM8", out:true, win:[10,16] },
+    { n:"Park Avenue", id:"ChIJf08FfxBw54gR5ZaArMYFULs", out:true, win:[10,21] },
+    { n:"Kraft Azalea Garden", id:"ChIJ-TjwRCFw54gRszapr62IW2c", out:true, win:[8,19] },
+    { n:"Mead Botanical Garden", id:"ChIJ-Q5hegpw54gR1N58sp-UbH0", out:true, win:[8,18] },
+    { n:"Polasek Museum", id:"ChIJ-UtH7xxw54gR8kcPnO3ji1U", win:[10,16] }
   ]},
   { short:"Local", title:"Lake Mary / Sanford", ideas:[
-    { n:"Historic downtown Sanford", id:"ChIJDWqneZ4T54gRJpn5wL108V0" },
-    { n:"Celery City Craft Beer Garden", id:"ChIJQR-Ro50T54gRiGygXBRNP2A" },
-    { n:"Sanford Riverwalk", id:"ChIJw2NNO4MT54gRZ9tjoEUu8es" },
-    { n:"Crown Alley speakeasy", id:"ChIJUeflnN4N54gRMBXxst01Enw" },
-    { n:"Pisco Peruvian, Lake Mary", id:"ChIJgSpgGPNz54gRX41xnctdMgQ" },
-    { n:"Arcade Monsters Lake Mary", id:"ChIJL-IsW-cN54gRrcvMnKCuL3I" }
+    { n:"Historic downtown Sanford", id:"ChIJDWqneZ4T54gRJpn5wL108V0", out:true, win:[11,23] },
+    { n:"Celery City Craft Beer Garden", id:"ChIJQR-Ro50T54gRiGygXBRNP2A", out:true, win:[15,24] },
+    { n:"Sanford Riverwalk", id:"ChIJw2NNO4MT54gRZ9tjoEUu8es", out:true, win:[7,20] },
+    { n:"Crown Alley speakeasy", id:"ChIJUeflnN4N54gRMBXxst01Enw", win:[17,24] },
+    { n:"Pisco Peruvian, Lake Mary", id:"ChIJgSpgGPNz54gRX41xnctdMgQ", win:[11,22] },
+    { n:"Arcade Monsters Lake Mary", id:"ChIJL-IsW-cN54gRrcvMnKCuL3I", win:[12,24] }
   ]},
   { short:"Late", title:"Late night", ideas:[
-    { n:"Tacos My Guey", id:"ChIJ8R8R131754gRZvSxQ9doikY" },
-    { n:"Noodle Shawty", id:"ChIJG-yZjW9754gRsSqGoswZM-M" },
-    { n:"The Bao Spot", id:"ChIJAePwMKJ754gR5aS2f_kgFlk" },
-    { n:"The Moderne", id:"ChIJQYukZf1754gRb0oC5vDcyDU" },
-    { n:"Keg Social, Waterford Lakes", id:"ChIJ7_PseA9n54gRpWhEjEiG3uo" },
-    { n:"Kings bowling on I-Drive", id:"ChIJ4XQ3d1N-54gRDFCoQUDsMUs" },
-    { n:"Aero Rooftop", id:"ChIJaaSUl_5654gRC3kVQiteyuY" }
+    { n:"Tacos My Guey", id:"ChIJ8R8R131754gRZvSxQ9doikY", win:[19,3] },
+    { n:"Noodle Shawty", id:"ChIJG-yZjW9754gRsSqGoswZM-M", win:[19,3] },
+    { n:"The Bao Spot", id:"ChIJAePwMKJ754gR5aS2f_kgFlk", win:[17,3] },
+    { n:"The Moderne", id:"ChIJQYukZf1754gRb0oC5vDcyDU", win:[17,2] },
+    { n:"Keg Social, Waterford Lakes", id:"ChIJ7_PseA9n54gRpWhEjEiG3uo", win:[16,2] },
+    { n:"Kings bowling on I-Drive", id:"ChIJ4XQ3d1N-54gRDFCoQUDsMUs", win:[16,1] },
+    { n:"Aero Rooftop", id:"ChIJaaSUl_5654gRC3kVQiteyuY", out:true, win:[22,2] }
   ]},
   { short:"Movies", title:"Movies", ideas:[
-    { n:"Regal Winter Park Village", id:"ChIJvdpNf2tw54gRn8zxkifjXBY" },
-    { n:"AmStar Lake Mary", id:"ChIJBTRHN0AN54gRsDT79N1crAs" },
-    { n:"Enzian Theater, Maitland", id:"ChIJ-WLCqkdw54gR5FyZzXYSoV4" },
-    { n:"Silver Moon Drive-In, Lakeland", id:"ChIJ1dJMdEc43YgRmII076Tbhmg" },
+    { n:"Regal Winter Park Village", id:"ChIJvdpNf2tw54gRn8zxkifjXBY", win:[11,23] },
+    { n:"AmStar Lake Mary", id:"ChIJBTRHN0AN54gRsDT79N1crAs", win:[11,23] },
+    { n:"Enzian Theater, Maitland", id:"ChIJ-WLCqkdw54gR5FyZzXYSoV4", win:[11,23] },
+    { n:"Silver Moon Drive-In, Lakeland", id:"ChIJ1dJMdEc43YgRmII076Tbhmg", out:true, win:[19,24] },
     { n:"Movie at home, you pick" }
   ]},
   { short:"Your call", title:"Your call", ideas:[
     { n:"Something you've been wanting to do" },
     { n:"Redo of our best date" },
-    { n:"Surprise me" },
-    { n:"Text me the plan" }
+    { n:"Surprise me" }
   ]}
 ];
 /* ------------------------------------ */
@@ -403,7 +416,7 @@ function draw(size){
   ctx.clearRect(0,0,size,size);
   GENRES.forEach((g,i)=>{
     const start = -Math.PI/2 - rad/2 + i*rad;
-    const spent = remaining(i).length === 0;
+    const spent = pickable(i).length === 0;
 
     ctx.beginPath();
     ctx.moveTo(r,r);
@@ -525,8 +538,98 @@ muteBtn.addEventListener("click", () => {
   if (!muted) tick();
 });
 
+/* ---- right-now filter: clock + weather ---- */
+let weather = null;      // { rain: bool, note: string }
+let filtersOn = true;
+const statusBar = document.getElementById("status");
+
+function openNow(idea){
+  if (!idea.win) return true;
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes()/60;
+  const [s, e] = idea.win;
+  return e > s ? (h >= s && h < e) : (h >= s || h < e);
+}
+
+function weatherOk(idea){
+  if (!idea.out) return true;
+  if (!weather) return true;
+  return !weather.rain;
+}
+
+function passes(idea){
+  if (!filtersOn) return true;
+  return openNow(idea) && weatherOk(idea);
+}
+
+function pickable(gi){ return remaining(gi).filter(passes); }
+
+async function loadWeather(){
+  try {
+    const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=28.5383&longitude=-81.3792&current=precipitation,temperature_2m&hourly=precipitation_probability&forecast_hours=4&temperature_unit=fahrenheit&timezone=auto");
+    if (!r.ok) return;
+    const d = await r.json();
+    const probs = (d.hourly && d.hourly.precipitation_probability) || [];
+    const worst = probs.length ? Math.max(...probs.slice(0, 4)) : 0;
+    const raining = (d.current && d.current.precipitation > 0) || false;
+    weather = {
+      rain: raining || worst >= 55,
+      temp: d.current ? Math.round(d.current.temperature_2m) : null,
+      worst: worst
+    };
+  } catch (e) { /* no weather, no filtering */ }
+  refreshWheel();
+  renderStatus();
+}
+
+function renderStatus(){
+  const bits = [];
+  if (weather && weather.rain){
+    bits.push(weather.worst >= 55 ? "Rain likely soon" : "Raining now");
+  }
+  if (!bits.length && weather && weather.temp !== null){
+    bits.push(`${weather.temp}°F out`);
+  }
+
+  let hidden = 0;
+  GENRES.forEach((g, i) => {
+    hidden += remaining(i).filter(idea => !(openNow(idea) && weatherOk(idea))).length;
+  });
+
+  if (!hidden && !bits.length){
+    statusBar.classList.add("hidden");
+    return;
+  }
+  statusBar.classList.remove("hidden");
+  statusBar.innerHTML = "";
+
+  const txt = document.createElement("span");
+  if (filtersOn && hidden){
+    txt.textContent = (bits.length ? bits[0] + " — " : "") + `${hidden} spot${hidden === 1 ? "" : "s"} hidden`;
+  } else if (!filtersOn && hidden){
+    txt.textContent = "Showing everything, closed spots included";
+  } else {
+    txt.textContent = bits[0];
+  }
+  statusBar.appendChild(txt);
+
+  if (hidden || !filtersOn){
+    const b = document.createElement("button");
+    b.textContent = filtersOn ? "Show all" : "Only what's open";
+    b.addEventListener("click", () => {
+      filtersOn = !filtersOn;
+      refreshWheel();
+      renderStatus();
+      result.innerHTML = "";
+      spinBtn.textContent = "Spin";
+    });
+    statusBar.appendChild(b);
+  }
+}
+
 function nextTarget(){
-  let pool = GENRES.map((g,i) => i).filter(i => remaining(i).length > 0);
+  let pool = GENRES.map((g,i) => i).filter(i => pickable(i).length > 0);
+  if (!pool.length) pool = GENRES.map((g,i) => i).filter(i => remaining(i).length > 0);
   if (!pool.length) pool = GENRES.map((g,i) => i);
   if (pool.length > 1){
     const trimmed = pool.filter(i => i !== lastSpin);
@@ -565,7 +668,7 @@ spinBtn.addEventListener("click", () => {
 
 function showGenre(gi){
   const g = GENRES[gi];
-  const left = remaining(gi);
+  const left = pickable(gi);
 
   const card = document.createElement("div");
   card.className = "card";
@@ -574,7 +677,10 @@ function showGenre(gi){
 
   if (!left.length){
     const note = document.createElement("p");
-    note.textContent = "We've done all of these. Write something new, or put one back below.";
+    const anyLeft = remaining(gi).length;
+    note.textContent = anyLeft
+      ? "Nothing here works right now — closed, or the weather's wrong. Write something new, or tap Show all above."
+      : "We've done all of these. Write something new, or put one back below.";
     box.appendChild(note);
   }
 
@@ -842,6 +948,7 @@ function lockIn(gi, name, fromList){
     persist();
     renderUsed();
     refreshWheel();
+    renderStatus();
   }
 
   if (combo){
@@ -928,6 +1035,9 @@ document.getElementById("toWheel").addEventListener("click", () => {
 
 sizeWheel();
 renderUsed();
+renderStatus();
+loadWeather();
+setInterval(() => { refreshWheel(); renderStatus(); }, 5 * 60 * 1000);
 window.addEventListener("resize", () => {
   const t = cv.style.transform;
   cv.style.transition = "none";
