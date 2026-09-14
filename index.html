@@ -497,6 +497,96 @@ function sendLink(text){
   return `sms:${PHONE}${apple ? "&" : "?"}body=${encodeURIComponent(text)}`;
 }
 
+function wrapLines(c, text, font, maxWidth){
+  c.font = font;
+  const words = text.split(" ");
+  const lines = [];
+  let line = "";
+  words.forEach(w => {
+    const test = line ? line + " " + w : w;
+    if (c.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = w;
+    } else {
+      line = test;
+    }
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+async function saveCard(name, genre, btn){
+  const label = btn.textContent;
+  btn.textContent = "Working…";
+  try { await document.fonts.ready; } catch (e) {}
+
+  const W = 1080, H = 1350;
+  const c2 = document.createElement("canvas");
+  c2.width = W; c2.height = H;
+  const c = c2.getContext("2d");
+
+  const bg = c.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#33265F");
+  bg.addColorStop(0.55, "#1E1740");
+  bg.addColorStop(1, "#140F2E");
+  c.fillStyle = bg;
+  c.fillRect(0, 0, W, H);
+
+  c.strokeStyle = "rgba(255,194,75,.55)";
+  c.lineWidth = 4;
+  c.strokeRect(46, 46, W - 92, H - 92);
+
+  c.textAlign = "center";
+
+  c.fillStyle = "#6BE3C0";
+  c.font = "500 34px Karla, system-ui, sans-serif";
+  c.fillText("That's the plan", W/2, 250);
+
+  let size = 108;
+  let lines = wrapLines(c, name, `600 ${size}px Fraunces, Georgia, serif`, W - 240);
+  while (lines.length > 4 && size > 52){
+    size -= 8;
+    lines = wrapLines(c, name, `600 ${size}px Fraunces, Georgia, serif`, W - 240);
+  }
+  c.fillStyle = "#F7F2E7";
+  c.font = `600 ${size}px Fraunces, Georgia, serif`;
+  const lh = size * 1.2;
+  const startY = H/2 - ((lines.length - 1) * lh)/2;
+  lines.forEach((l, i) => c.fillText(l, W/2, startY + i*lh));
+
+  c.fillStyle = "#FFC24B";
+  c.font = "500 38px Karla, system-ui, sans-serif";
+  c.fillText(genre, W/2, H - 300);
+
+  c.fillStyle = "#B4A8DC";
+  c.font = "400 30px Karla, system-ui, sans-serif";
+  c.fillText(new Date().toLocaleDateString(undefined, {month:"long", day:"numeric", year:"numeric"}), W/2, H - 230);
+
+  c2.toBlob(async (blob) => {
+    if (!blob){ btn.textContent = label; return; }
+    const file = new File([blob], "date-night.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })){
+      try {
+        await navigator.share({ files: [file] });
+        btn.textContent = label;
+        return;
+      } catch (e) {
+        btn.textContent = label;
+        return;
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "date-night.png";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    btn.textContent = label;
+  }, "image/png");
+}
+
 function lockIn(gi, name, fromList){
   if (fromList){
     used.add(key(gi, name));
@@ -513,11 +603,15 @@ function lockIn(gi, name, fromList){
     <p class="pick">${name}</p>
     <div class="row">
       <a class="btn" href="${sendLink(text)}">Send it to me</a>
+      <button class="btn ghost" id="save">Save image</button>
       <button class="btn ghost" id="redo">Start over</button>
     </div>`;
   result.innerHTML = "";
   result.appendChild(card);
 
+  card.querySelector("#save").addEventListener("click", (e) => {
+    saveCard(name, GENRES[gi].title, e.target);
+  });
   card.querySelector("#redo").addEventListener("click", () => {
     result.innerHTML = "";
     spinBtn.textContent = "Spin";
