@@ -78,6 +78,29 @@
   .hub:active{transform:translate(-50%,-50%) scale(.96)}
   .hub:disabled{cursor:default;opacity:.75}
 
+  .switchrow{display:flex;gap:4px;justify-content:center;align-items:center;margin-top:2px;flex-wrap:wrap}
+  .switch.on{color:var(--amber);text-decoration-color:var(--amber)}
+  .plan ol{list-style:none;margin:0;padding:0;counter-reset:step}
+  .plan ol li{
+    counter-increment:step;
+    display:flex;align-items:center;gap:10px;
+    padding:11px 0;border-top:1px solid rgba(255,255,255,.09);
+    font-size:1rem;color:var(--cream);
+  }
+  .plan ol li::before{
+    content:counter(step);
+    flex:none;width:26px;height:26px;border-radius:50%;
+    background:var(--night-deep);color:var(--amber);
+    font-size:.8rem;display:flex;align-items:center;justify-content:center;
+  }
+  .plan ol li span{flex:1;min-width:0}
+  .plan ol li button{
+    flex:none;background:none;border:1px solid rgba(255,255,255,.2);
+    color:#C3B6EA;border-radius:999px;padding:6px 12px;
+    font-family:'Karla',sans-serif;font-size:.8rem;cursor:pointer;
+  }
+  .plan .row{margin-top:16px}
+
   .switch{
     background:none;border:0;color:#C3B6EA;
     font-family:'Karla',sans-serif;font-size:.95rem;
@@ -207,8 +230,11 @@
       <div class="rim"><canvas id="wheel" width="320" height="320"></canvas></div>
       <button class="hub" id="spin">Spin</button>
     </div>
-    <br>
-    <button class="switch" id="toMenu">I'd rather just pick</button>
+    <div class="switchrow">
+      <button class="switch" id="toMenu">I'd rather just pick</button>
+      <button class="switch" id="combo">Combo night</button>
+      <button class="switch" id="mute">Sound on</button>
+    </div>
   </div>
 
   <!-- MENU -->
@@ -218,6 +244,7 @@
   </div>
 
   <!-- RESULT -->
+  <div id="planBox"></div>
   <div id="result"></div>
   <div id="usedBox"></div>
 </div>
@@ -289,6 +316,21 @@ const GENRES = [
     { n:"Crown Alley speakeasy", id:"ChIJUeflnN4N54gRMBXxst01Enw" },
     { n:"Pisco Peruvian, Lake Mary", id:"ChIJgSpgGPNz54gRX41xnctdMgQ" },
     { n:"Arcade Monsters Lake Mary", id:"ChIJL-IsW-cN54gRrcvMnKCuL3I" }
+  ]},
+  { short:"Late", title:"Late night", ideas:[
+    { n:"Tacos My Guey", id:"ChIJ8R8R131754gRZvSxQ9doikY" },
+    { n:"Noodle Shawty", id:"ChIJG-yZjW9754gRsSqGoswZM-M" },
+    { n:"The Bao Spot", id:"ChIJAePwMKJ754gR5aS2f_kgFlk" },
+    { n:"The Moderne", id:"ChIJQYukZf1754gRb0oC5vDcyDU" },
+    { n:"Keg Social, Waterford Lakes", id:"ChIJ7_PseA9n54gRpWhEjEiG3uo" },
+    { n:"Kings bowling on I-Drive", id:"ChIJ4XQ3d1N-54gRDFCoQUDsMUs" },
+    { n:"Aero Rooftop", id:"ChIJaaSUl_5654gRC3kVQiteyuY" }
+  ]},
+  { short:"Movies", title:"Movies", ideas:[
+    { n:"Regal Winter Park Village", id:"ChIJvdpNf2tw54gRn8zxkifjXBY" },
+    { n:"AmStar Lake Mary", id:"ChIJBTRHN0AN54gRsDT79N1crAs" },
+    { n:"Enzian Theater, Maitland", id:"ChIJ-WLCqkdw54gR5FyZzXYSoV4" },
+    { n:"Movie at home, you pick" }
   ]},
   { short:"Your call", title:"Your call", ideas:[
     { n:"Something you've been wanting to do" },
@@ -382,6 +424,82 @@ function refreshWheel(){
   cv.style.transform = `rotate(${rotation}deg)`;
 }
 
+/* ---- sound ---- */
+let actx = null, muted = false;
+try { muted = localStorage.getItem("datenight.muted") === "1"; } catch (e) {}
+
+function audio(){
+  if (muted) return null;
+  try {
+    if (!actx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      actx = new AC();
+    }
+    if (actx.state === "suspended") actx.resume();
+    return actx;
+  } catch (e) { return null; }
+}
+
+function tick(){
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = "square";
+  o.frequency.value = 1500;
+  g.gain.setValueAtTime(0.05, a.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.045);
+  o.connect(g); g.connect(a.destination);
+  o.start();
+  o.stop(a.currentTime + 0.05);
+}
+
+function chime(){
+  const a = audio(); if (!a) return;
+  [660, 880, 1320].forEach((f, i) => {
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = "sine";
+    o.frequency.value = f;
+    const t = a.currentTime + i * 0.09;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.11, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    o.connect(g); g.connect(a.destination);
+    o.start(t);
+    o.stop(t + 0.4);
+  });
+}
+
+function currentDeg(){
+  const st = getComputedStyle(cv).transform;
+  if (!st || st === "none") return 0;
+  const m = st.match(/matrix\(([^)]+)\)/);
+  if (!m) return 0;
+  const p = m[1].split(",").map(Number);
+  return Math.atan2(p[1], p[0]) * 180 / Math.PI;
+}
+
+function trackTicks(){
+  let last = null;
+  const step = () => {
+    if (!spinning) return;
+    const deg = ((currentDeg() % 360) + 360) % 360;
+    const idx = Math.round(((360 - deg) % 360) / SEG);
+    if (last === null) last = idx;
+    else if (idx !== last){ tick(); last = idx; }
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+const muteBtn = document.getElementById("mute");
+muteBtn.textContent = muted ? "Sound off" : "Sound on";
+muteBtn.addEventListener("click", () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? "Sound off" : "Sound on";
+  try { localStorage.setItem("datenight.muted", muted ? "1" : "0"); } catch (e) {}
+  if (!muted) tick();
+});
+
 function nextTarget(){
   let pool = GENRES.map((g,i) => i).filter(i => remaining(i).length > 0);
   if (!pool.length) pool = GENRES.map((g,i) => i);
@@ -409,11 +527,13 @@ spinBtn.addEventListener("click", () => {
   cv.style.transition = `transform ${dur}ms cubic-bezier(.16,.84,.28,1)`;
   cv.style.transform = `rotate(${next}deg)`;
   rotation = next;
+  trackTicks();
 
   setTimeout(() => {
     spinning = false;
     spinBtn.disabled = false;
     spinBtn.textContent = "Again";
+    chime();
     showGenre(target);
   }, dur + 120);
 });
@@ -495,6 +615,95 @@ function showGenre(gi){
 function sendLink(text){
   const apple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
   return `sms:${PHONE}${apple ? "&" : "?"}body=${encodeURIComponent(text)}`;
+}
+
+/* ---- combo night ---- */
+let combo = false;
+let plan = [];
+const planBox = document.getElementById("planBox");
+const comboBtn = document.getElementById("combo");
+
+comboBtn.addEventListener("click", () => {
+  combo = !combo;
+  plan = [];
+  comboBtn.textContent = combo ? "One thing only" : "Combo night";
+  comboBtn.classList.toggle("on", combo);
+  result.innerHTML = "";
+  spinBtn.textContent = "Spin";
+  renderPlan();
+});
+
+function renderPlan(){
+  planBox.innerHTML = "";
+  if (!combo) return;
+
+  const box = document.createElement("div");
+  box.className = "card plan";
+  const h = document.createElement("h2");
+  h.textContent = plan.length ? "The night so far" : "Combo night";
+  box.appendChild(h);
+
+  if (!plan.length){
+    const p = document.createElement("p");
+    p.textContent = "Spin or pick as many times as you want. Everything you choose stacks up here.";
+    box.appendChild(p);
+  } else {
+    const ol = document.createElement("ol");
+    plan.forEach((n, i) => {
+      const li = document.createElement("li");
+      const s = document.createElement("span");
+      s.textContent = n;
+      const x = document.createElement("button");
+      x.textContent = "Remove";
+      x.addEventListener("click", () => { plan.splice(i, 1); renderPlan(); });
+      li.appendChild(s);
+      li.appendChild(x);
+      ol.appendChild(li);
+    });
+    box.appendChild(ol);
+
+    const row = document.createElement("div");
+    row.className = "row";
+    const done = document.createElement("button");
+    done.className = "btn";
+    done.textContent = "That's the night";
+    done.addEventListener("click", finishCombo);
+    row.appendChild(done);
+    box.appendChild(row);
+  }
+  planBox.appendChild(box);
+}
+
+function finishCombo(){
+  if (!plan.length) return;
+  const joined = plan.join(" → ");
+  const text = `Our next date: ${joined}`;
+
+  const card = document.createElement("div");
+  card.className = "card locked";
+  card.innerHTML = `
+    <div class="label">That's the plan</div>
+    <p class="pick">${joined}</p>
+    <div class="row">
+      <a class="btn" href="${sendLink(text)}">Send it to me</a>
+      <button class="btn ghost" id="save">Save image</button>
+      <button class="btn ghost" id="redo">Start over</button>
+    </div>`;
+  planBox.innerHTML = "";
+  result.innerHTML = "";
+  result.appendChild(card);
+
+  const items = plan.slice();
+  card.querySelector("#save").addEventListener("click", (e) => {
+    saveCard(items.join("  ·  "), "Combo night", e.target);
+  });
+  card.querySelector("#redo").addEventListener("click", () => {
+    plan = [];
+    result.innerHTML = "";
+    spinBtn.textContent = "Spin";
+    renderPlan();
+  });
+  card.scrollIntoView({behavior:"smooth", block:"nearest"});
 }
 
 function wrapLines(c, text, font, maxWidth){
@@ -593,6 +802,14 @@ function lockIn(gi, name, fromList){
     persist();
     renderUsed();
     refreshWheel();
+  }
+
+  if (combo){
+    plan.push(name);
+    result.innerHTML = "";
+    spinBtn.textContent = "Spin";
+    renderPlan();
+    return;
   }
 
   const text = `Our next date: ${name}`;
