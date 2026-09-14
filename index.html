@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pick our next date</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#1E1740;
+    --night-deep:#140F2E;
+    --surface:#2C2358;
+    --amber:#FFC24B;
+    --coral:#FF6B6B;
+    --mint:#6BE3C0;
+    --lilac:#B79CFF;
+    --cream:#F7F2E7;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(120% 80% at 50% -10%, #33265F 0%, var(--night) 45%, var(--night-deep) 100%);
+    color:var(--cream);
+    font-family:'Karla',system-ui,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:32px 20px 64px;
+  }
+  .wrap{width:100%;max-width:460px;text-align:center}
+
+  h1{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:600;
+    font-size:clamp(2.1rem,9vw,2.9rem);
+    line-height:1.05;
+    margin:0 0 10px;
+    letter-spacing:-0.015em;
+  }
+  .sub{
+    font-size:1rem;
+    line-height:1.55;
+    color:#CFC5EE;
+    margin:0 auto 30px;
+    max-width:30ch;
+  }
+
+  /* wheel */
+  .stage{position:relative;display:inline-block;margin-bottom:8px}
+  .needle{
+    position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+    width:0;height:0;z-index:3;
+    border-left:13px solid transparent;
+    border-right:13px solid transparent;
+    border-top:24px solid var(--coral);
+    filter:drop-shadow(0 3px 0 rgba(0,0,0,.35));
+  }
+  .rim{
+    padding:9px;border-radius:50%;
+    background:linear-gradient(160deg,var(--amber),#C9873A 55%,var(--amber));
+    box-shadow:0 18px 44px rgba(10,6,30,.6);
+  }
+  canvas{display:block;border-radius:50%;background:var(--surface)}
+  .hub{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:86px;height:86px;border-radius:50%;
+    border:5px solid var(--amber);
+    background:var(--night-deep);
+    color:var(--cream);
+    font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem;
+    cursor:pointer;z-index:2;
+    transition:transform .12s ease;
+  }
+  .hub:hover{transform:translate(-50%,-50%) scale(1.05)}
+  .hub:active{transform:translate(-50%,-50%) scale(.96)}
+  .hub:disabled{cursor:default;opacity:.75}
+
+  .switch{
+    background:none;border:0;color:#C3B6EA;
+    font-family:'Karla',sans-serif;font-size:.95rem;
+    text-decoration:underline;text-underline-offset:4px;
+    cursor:pointer;padding:10px;margin-top:6px;
+  }
+  .switch:hover{color:var(--cream)}
+
+  /* menu */
+  .menu{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+  .menu button{
+    background:var(--surface);border:1px solid rgba(183,156,255,.3);
+    color:var(--cream);border-radius:14px;padding:16px 12px;
+    font-family:'Fraunces',serif;font-size:1rem;font-weight:600;
+    cursor:pointer;transition:background .15s ease,border-color .15s ease;
+  }
+  .menu button:hover{background:#372C6B;border-color:var(--amber)}
+
+  /* result */
+  .card{
+    margin-top:26px;padding:24px 20px;
+    background:var(--surface);
+    border-radius:20px;
+    border:1px solid rgba(255,194,75,.28);
+    text-align:left;
+  }
+  .card h2{
+    font-family:'Fraunces',serif;font-weight:700;
+    font-size:1.6rem;margin:0 0 16px;color:var(--amber);
+  }
+  .card p{margin:0 0 18px;color:#D6CDF2;line-height:1.55;font-size:.98rem}
+  .ideas{display:flex;flex-direction:column;gap:9px}
+  .ideas button{
+    text-align:left;background:var(--night-deep);
+    border:1px solid rgba(107,227,192,.25);
+    color:var(--cream);border-radius:12px;padding:13px 15px;
+    font-family:'Karla',sans-serif;font-size:1rem;cursor:pointer;
+    transition:border-color .15s ease,background .15s ease;
+  }
+  .ideas button:hover{border-color:var(--mint);background:#1B1440}
+
+  .custom{display:flex;gap:8px;margin-top:14px}
+  .custom input{
+    flex:1;min-width:0;
+    background:var(--night-deep);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:12px;padding:13px 15px;
+    color:var(--cream);font-family:'Karla',sans-serif;font-size:1rem;
+  }
+  .custom input::placeholder{color:#8D82B8}
+  .custom input:focus{border-color:var(--mint);outline:none}
+  .custom button{
+    border:0;border-radius:12px;padding:0 18px;
+    background:var(--mint);color:#14213A;
+    font-family:'Karla',sans-serif;font-weight:700;font-size:.95rem;cursor:pointer;
+  }
+
+  .locked{text-align:center;padding:30px 22px}
+  .locked .label{font-size:.95rem;color:var(--mint);margin-bottom:10px}
+  .locked .pick{
+    font-family:'Fraunces',serif;font-weight:600;font-size:1.5rem;
+    line-height:1.25;margin:0 0 22px;
+  }
+  .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .btn{
+    border-radius:999px;padding:12px 20px;cursor:pointer;
+    font-family:'Karla',sans-serif;font-size:.95rem;font-weight:700;
+    border:1px solid var(--amber);background:var(--amber);color:#221741;
+  }
+  .btn.ghost{background:transparent;color:var(--cream);border-color:rgba(255,255,255,.3)}
+
+  .used{
+    margin:22px auto 0;max-width:100%;text-align:left;
+    background:rgba(0,0,0,.18);border-radius:14px;padding:4px 14px;
+  }
+  .used summary{
+    cursor:pointer;padding:12px 0;color:#B4A8DC;font-size:.92rem;
+    list-style:none;
+  }
+  .used summary::-webkit-details-marker{display:none}
+  .used summary::after{content:" ▾";color:#7E71AE}
+  .used[open] summary::after{content:" ▴"}
+  .used ul{list-style:none;margin:0;padding:0 0 10px}
+  .used li{
+    display:flex;align-items:center;gap:10px;
+    padding:9px 0;border-top:1px solid rgba(255,255,255,.07);
+    font-size:.95rem;color:#CFC5EE;
+  }
+  .used li span{flex:1;min-width:0}
+  .used li button{
+    flex:none;background:none;border:1px solid rgba(255,255,255,.22);
+    color:var(--cream);border-radius:999px;padding:6px 12px;
+    font-family:'Karla',sans-serif;font-size:.82rem;cursor:pointer;
+  }
+  .used li button:hover{border-color:var(--mint);color:var(--mint)}
+
+  :focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+  .hidden{display:none}
+  @media (prefers-reduced-motion:reduce){
+    canvas{transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="headline">Let’s pick our next date twincess</h1>
+  <p class="sub">Spin it and let the wheel decide.</p>
+
+  <!-- WHEEL -->
+  <div id="wheelView">
+    <div class="stage">
+      <div class="needle"></div>
+      <div class="rim"><canvas id="wheel" width="320" height="320"></canvas></div>
+      <button class="hub" id="spin">Spin</button>
+    </div>
+    <br>
+    <button class="switch" id="toMenu">I'd rather just pick</button>
+  </div>
+
+  <!-- MENU -->
+  <div id="menuView" class="hidden">
+    <div class="menu" id="menu"></div>
+    <button class="switch" id="toWheel">Back to the wheel</button>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result"></div>
+  <div id="usedBox"></div>
+</div>
+
+<script>
+/* ---------- edit this part ---------- */
+const PHONE = "+13219489554";
+
+const GENRES = [
+  { short:"Eat",      title:"Eat something new",
+    ideas:["Great Southern Box Company","Mills 50","City Food Hall","Dessert downtown"] },
+  { short:"Outside",  title:"Outside all day",
+    ideas:["Tibet-Butler Preserve","Shingle Creek Trail","Paddleboard the Winter Park chain","Night kayak at Indian River Lagoon"] },
+  { short:"Stay in",  title:"Stay in",
+    ideas:["Cook something from scratch","Movie marathon","Board games and takeout","Build a playlist together"] },
+  { short:"Make",     title:"Make something",
+    ideas:["All Fired Up, Winter Park","Stroke of Art","Super Awesome Cool Pottery","Bake something"] },
+  { short:"Loud",     title:"Somewhere loud",
+    ideas:["The Social","Candlelight concert at The Abbey","Judson's Live","Tin Roof"] },
+  { short:"Tourists", title:"Be tourists",
+    ideas:["Orlando Museum of Art","Orlando Science Center","Museum of Illusions","Titanic exhibition"] },
+  { short:"Sunset",   title:"Sunset plan",
+    ideas:["AC Sky Bar","KaLa Rooftop","Lake Eola","Leu Gardens"] },
+  { short:"Winter Park", title:"Winter Park",
+    ideas:["Morse Museum","Scenic Boat Tour","Park Avenue","Kraft Azalea Garden","Mead Botanical Garden","Polasek Museum"] },
+  { short:"Local", title:"Lake Mary / Sanford",
+    ideas:["Historic downtown Sanford","Celery City Craft Beer Garden","Sanford Riverwalk","Crown Alley speakeasy","Pisco Peruvian, Lake Mary","Arcade Monsters Lake Mary"] },
+  { short:"Your call",title:"Your call",
+    ideas:["Something you've been wanting to do","Redo of our best date","Surprise me","Text me the plan"] }
+];
+/* ------------------------------------ */
+
+const SEG = 360 / GENRES.length;
+const PALETTE = ["#3B2E73","#4A3A8C","#332764","#574496"];
+const ACCENTS = ["#FFC24B","#6BE3C0","#B79CFF","#FF6B6B"];
+
+/* ---- used ideas, remembered between visits ---- */
+const STORE = "datenight.used.v1";
+let used = new Set();
+try { used = new Set(JSON.parse(localStorage.getItem(STORE) || "[]")); } catch (e) {}
+function persist(){ try { localStorage.setItem(STORE, JSON.stringify([...used])); } catch (e) {} }
+function key(gi, idea){ return gi + "|" + idea; }
+function remaining(gi){ return GENRES[gi].ideas.filter(idea => !used.has(key(gi, idea))); }
+
+const cv = document.getElementById("wheel");
+const ctx = cv.getContext("2d");
+
+function sizeWheel(){
+  const css = Math.min(320, window.innerWidth - 90);
+  const dpr = window.devicePixelRatio || 1;
+  cv.style.width = css + "px";
+  cv.style.height = css + "px";
+  cv.width = css * dpr;
+  cv.height = css * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw(css);
+}
+
+function draw(size){
+  const r = size/2, rad = SEG * Math.PI/180;
+  ctx.clearRect(0,0,size,size);
+  GENRES.forEach((g,i)=>{
+    const start = -Math.PI/2 - rad/2 + i*rad;
+    const spent = remaining(i).length === 0;
+
+    ctx.beginPath();
+    ctx.moveTo(r,r);
+    ctx.arc(r,r,r,start,start+rad);
+    ctx.fillStyle = PALETTE[i % PALETTE.length];
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.10)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const mid = start + rad/2;
+    const m = ((mid % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
+    const flip = m > Math.PI/2 && m < Math.PI*1.5;
+
+    ctx.save();
+    ctx.translate(r,r);
+    ctx.rotate(mid);
+    if (flip) ctx.rotate(Math.PI);
+    ctx.textAlign = flip ? "left" : "right";
+    ctx.textBaseline = "middle";
+    ctx.globalAlpha = spent ? 0.35 : 1;
+    ctx.fillStyle = ACCENTS[i % ACCENTS.length];
+
+    let fs = Math.max(11, size*0.055);
+    const maxW = r*0.62;
+    ctx.font = `600 ${fs}px Fraunces, Georgia, serif`;
+    while (ctx.measureText(g.short).width > maxW && fs > 9){
+      fs -= 1;
+      ctx.font = `600 ${fs}px Fraunces, Georgia, serif`;
+    }
+    ctx.fillText(g.short, flip ? -r*0.88 : r*0.88, 0);
+    ctx.restore();
+  });
+}
+
+let rotation = 0, spinning = false, lastSpin = -1;
+const spinBtn = document.getElementById("spin");
+const result = document.getElementById("result");
+const usedBox = document.getElementById("usedBox");
+
+function nextTarget(){
+  let pool = GENRES.map((g,i) => i).filter(i => remaining(i).length > 0);
+  if (!pool.length) pool = GENRES.map((g,i) => i);
+  if (pool.length > 1){
+    const trimmed = pool.filter(i => i !== lastSpin);
+    if (trimmed.length) pool = trimmed;
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+spinBtn.addEventListener("click", () => {
+  if (spinning) return;
+  spinning = true;
+  spinBtn.disabled = true;
+  result.innerHTML = "";
+
+  const target = nextTarget();
+  lastSpin = target;
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const turns = reduced ? 1 : 5 + Math.floor(Math.random()*3);
+  const landing = (360 - target * SEG) % 360;
+  const next = rotation - (rotation % 360) + turns*360 + landing;
+  const dur = reduced ? 400 : 4200;
+
+  cv.style.transition = `transform ${dur}ms cubic-bezier(.16,.84,.28,1)`;
+  cv.style.transform = `rotate(${next}deg)`;
+  rotation = next;
+
+  setTimeout(() => {
+    spinning = false;
+    spinBtn.disabled = false;
+    spinBtn.textContent = "Again";
+    showGenre(target);
+  }, dur + 120);
+});
+
+function showGenre(gi){
+  const g = GENRES[gi];
+  const left = remaining(gi);
+
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<h2>${g.title}</h2><div class="ideas"></div>`;
+  const box = card.querySelector(".ideas");
+
+  if (!left.length){
+    const note = document.createElement("p");
+    note.textContent = "We've done all of these. Write something new, or put one back below.";
+    box.appendChild(note);
+  }
+
+  left.forEach(idea => {
+    const b = document.createElement("button");
+    b.textContent = idea;
+    b.addEventListener("click", () => lockIn(gi, idea, true));
+    box.appendChild(b);
+  });
+
+  const custom = document.createElement("div");
+  custom.className = "custom";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Or write your own";
+  input.setAttribute("aria-label", "Your own idea");
+  const add = document.createElement("button");
+  add.textContent = "Use this";
+  const submit = () => {
+    const val = input.value.trim();
+    if (!val) { input.focus(); return; }
+    lockIn(gi, val, false);
+  };
+  add.addEventListener("click", submit);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+  custom.appendChild(input);
+  custom.appendChild(add);
+  card.appendChild(custom);
+
+  result.innerHTML = "";
+  result.appendChild(card);
+  card.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+function sendLink(text){
+  const apple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
+  return `sms:${PHONE}${apple ? "&" : "?"}body=${encodeURIComponent(text)}`;
+}
+
+function lockIn(gi, idea, fromList){
+  if (fromList){
+    used.add(key(gi, idea));
+    persist();
+    renderUsed();
+    sizeWheel();
+    cv.style.transform = `rotate(${rotation}deg)`;
+  }
+
+  const text = `Our next date: ${idea}`;
+  const card = document.createElement("div");
+  card.className = "card locked";
+  card.innerHTML = `
+    <div class="label">That's the plan</div>
+    <p class="pick">${idea}</p>
+    <div class="row">
+      ${PHONE
+        ? `<a class="btn" href="${sendLink(text)}">Send it to me</a>`
+        : `<button class="btn" id="copy">Copy and send it to me</button>`}
+      <button class="btn ghost" id="redo">Start over</button>
+    </div>`;
+  result.innerHTML = "";
+  result.appendChild(card);
+
+  const copy = card.querySelector("#copy");
+  if (copy){
+    copy.addEventListener("click", async (e) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        e.target.textContent = "Copied — now send it";
+      } catch (err) {
+        e.target.textContent = text;
+      }
+    });
+  }
+  card.querySelector("#redo").addEventListener("click", () => {
+    result.innerHTML = "";
+    spinBtn.textContent = "Spin";
+  });
+  card.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+function renderUsed(){
+  usedBox.innerHTML = "";
+  if (!used.size) return;
+
+  const box = document.createElement("details");
+  box.className = "used";
+  const sum = document.createElement("summary");
+  sum.textContent = `Already used (${used.size})`;
+  box.appendChild(sum);
+
+  const list = document.createElement("ul");
+  [...used].forEach(k => {
+    const gi = Number(k.slice(0, k.indexOf("|")));
+    const idea = k.slice(k.indexOf("|") + 1);
+    const li = document.createElement("li");
+    const label = document.createElement("span");
+    label.textContent = idea;
+    const back = document.createElement("button");
+    back.textContent = "Put back";
+    back.addEventListener("click", () => {
+      used.delete(k);
+      persist();
+      renderUsed();
+      sizeWheel();
+      cv.style.transform = `rotate(${rotation}deg)`;
+    });
+    li.appendChild(label);
+    li.appendChild(back);
+    list.appendChild(li);
+  });
+  box.appendChild(list);
+  usedBox.appendChild(box);
+}
+
+/* menu mode */
+const menu = document.getElementById("menu");
+GENRES.forEach((g,i) => {
+  const b = document.createElement("button");
+  b.textContent = g.title;
+  b.addEventListener("click", () => showGenre(i));
+  menu.appendChild(b);
+});
+
+const wheelView = document.getElementById("wheelView");
+const menuView = document.getElementById("menuView");
+document.getElementById("toMenu").addEventListener("click", () => {
+  wheelView.classList.add("hidden"); menuView.classList.remove("hidden"); result.innerHTML = "";
+});
+document.getElementById("toWheel").addEventListener("click", () => {
+  menuView.classList.add("hidden"); wheelView.classList.remove("hidden"); result.innerHTML = "";
+});
+
+sizeWheel();
+renderUsed();
+window.addEventListener("resize", () => {
+  const t = cv.style.transform;
+  cv.style.transition = "none";
+  sizeWheel();
+  cv.style.transform = t;
+});
+</script>
+</body>
+</html>
